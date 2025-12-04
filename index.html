@@ -3,250 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Call (Fixed)</title>
+    <title>Random Stranger Chat</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* WhatsApp Dark Theme */
-        :root {
-            --bg-dark: #0b141a;
-            --header: #202c33;
-            --primary: #00a884;
-            --text: #e9edef;
-            --incoming-bg: #202c33;
-        }
+        /* --- UI DESIGN --- */
         body {
-            background-color: var(--bg-dark);
-            color: var(--text);
-            font-family: Helvetica, Arial, sans-serif;
-            margin: 0; height: 100vh; overflow: hidden;
-            display: flex; flex-direction: column;
-        }
-        
-        /* HEADER */
-        .header {
-            padding: 15px; background: var(--header);
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .status-badge {
-            font-size: 12px; background: #333; padding: 5px 10px; 
-            border-radius: 20px; display: flex; align-items: center; gap: 5px;
-        }
-        .dot { height: 8px; width: 8px; border-radius: 50%; background: red; }
-        
-        /* ID SECTION */
-        .my-id-card {
-            background: #202c33; margin: 20px; padding: 20px;
-            border-radius: 15px; text-align: center;
-            border: 1px solid #333;
-        }
-        .id-number {
-            font-size: 32px; font-weight: bold; color: var(--primary);
-            letter-spacing: 2px; margin: 10px 0;
-        }
-        
-        /* FORM SECTION */
-        .connect-box {
-            padding: 0 20px;
-        }
-        input {
-            width: 100%; padding: 15px; background: #2a3942;
-            border: none; border-radius: 10px; color: white;
-            font-size: 18px; text-align: center; margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-        .call-btn {
-            width: 100%; padding: 15px; background: var(--primary);
-            border: none; border-radius: 10px; color: black;
-            font-size: 18px; font-weight: bold; cursor: pointer;
+            margin: 0;
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
-        /* SCREENS */
-        #video-ui, #incoming-ui {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100; display: none; flex-direction: column;
+        /* START SCREEN */
+        #start-screen {
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn 1s ease;
         }
+        h1 { margin-bottom: 5px; font-weight: 300; letter-spacing: 2px; }
+        p { color: #888; margin-bottom: 40px; }
         
+        .main-btn {
+            padding: 15px 40px;
+            border-radius: 50px;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+        }
+        .btn-start {
+            background: linear-gradient(45deg, #ff0055, #ff00aa);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 0, 85, 0.6); }
+
         /* VIDEO SCREEN */
-        #video-ui { background: black; }
-        video { width: 100%; height: 100%; object-fit: cover; }
+        #video-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            display: none;
+            flex-direction: column;
+        }
+
+        /* Searching Animation Layer */
+        #searching-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 10;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .loader {
+            width: 60px; height: 60px;
+            border: 5px solid #333;
+            border-top: 5px solid #00d2ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Videos */
+        video { object-fit: cover; }
+        #remote-video { width: 100%; height: 100%; }
         #local-video {
-            position: absolute; bottom: 100px; right: 20px;
-            width: 100px; height: 140px; background: #222;
-            border: 2px solid white; border-radius: 10px; transform: scaleX(-1);
+            position: absolute; bottom: 20px; right: 20px;
+            width: 120px; height: 160px;
+            background: #222; border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px; transform: scaleX(-1);
+            z-index: 5;
         }
+
+        /* Controls */
         .controls {
-            position: absolute; bottom: 20px; width: 100%;
-            display: flex; justify-content: center; gap: 20px;
+            position: absolute; bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 20px;
+            z-index: 20;
         }
-        .icon-btn {
-            width: 60px; height: 60px; border-radius: 50%; border: none;
-            background: rgba(255,255,255,0.2); color: white; font-size: 24px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+        .ctrl-btn {
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
+        .btn-skip { background: white; color: black; }
+        .btn-stop { background: #ff3333; color: white; }
 
-        /* INCOMING SCREEN */
-        #incoming-ui {
-            background: rgba(11, 20, 26, 0.95);
-            align-items: center; justify-content: center;
-        }
-        .pulse-avatar {
-            width: 100px; height: 100px; background: var(--primary);
-            border-radius: 50%; margin-bottom: 20px;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7);} 70% {box-shadow: 0 0 0 20px rgba(0, 168, 132, 0);} 100% {box-shadow: 0 0 0 0 rgba(0, 168, 132, 0);} }
-
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="home-screen">
-        <div class="header">
-            <span>WhatsApp Call</span>
-            <div class="status-badge">
-                <div id="status-dot" class="dot"></div>
-                <span id="status-text">Connecting...</span>
-            </div>
-        </div>
-
-        <div class="my-id-card">
-            <div style="font-size: 14px; color: #aaa;">YOUR ID</div>
-            <div class="id-number" id="my-id">...</div>
-            <div style="font-size: 12px; color: #777;">Share this number with your friend</div>
-        </div>
-
-        <div class="connect-box">
-            <p style="color: #aaa; margin-bottom: 10px;">Call a friend</p>
-            <input type="number" id="partner-id" placeholder="Enter Friend's ID" inputmode="numeric">
-            <button class="call-btn" onclick="startCall()">Video Call</button>
-        </div>
+    <!-- SCREEN 1: LANDING -->
+    <div id="start-screen">
+        <div style="font-size: 60px;">🌎</div>
+        <h1>RANDOM TALK</h1>
+        <p>Connect with strangers instantly.</p>
+        <button class="main-btn btn-start" onclick="startApp()">
+            <i class="material-icons">video_call</i> START MATCHING
+        </button>
+        <p id="status-text" style="margin-top: 20px; font-size: 12px;">Connecting to server...</p>
     </div>
 
-    <div id="incoming-ui">
-        <div class="pulse-avatar"></div>
-        <h2 id="caller-id">Unknown</h2>
-        <p>Incoming Video Call...</p>
-        <div style="display: flex; gap: 40px; margin-top: 40px;">
-            <button class="icon-btn" style="background: #f44336;" onclick="rejectCall()"><i class="material-icons">call_end</i></button>
-            <button class="icon-btn" style="background: #00a884;" onclick="acceptCall()"><i class="material-icons">videocam</i></button>
+    <!-- SCREEN 2: VIDEO CHAT -->
+    <div id="video-screen">
+        <!-- Searching Overlay -->
+        <div id="searching-layer">
+            <div class="loader"></div>
+            <h3>Searching for partner...</h3>
+            <p style="color: #666;">Please wait while we connect you.</p>
         </div>
-    </div>
 
-    <div id="video-ui">
         <video id="remote-video" autoplay playsinline></video>
         <video id="local-video" autoplay muted playsinline></video>
+
         <div class="controls">
-            <button class="icon-btn" style="background: #f44336;" onclick="endCall()"><i class="material-icons">call_end</i></button>
+            <button class="ctrl-btn btn-stop" onclick="stopChat()">STOP</button>
+            <button class="ctrl-btn btn-skip" onclick="skipPartner()">NEXT ➡</button>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
+        // --- CONFIG ---
+        // 1-50 IDs ka pool. Agar user base badhana hai to ise 100 kar dein.
+        const ID_RANGE = 20; 
         
-        // 1. Generate clean 4-digit ID
-        let myID = localStorage.getItem('clean_id');
-        if (!myID || isNaN(myID)) { // Check if old 'user-xxx' ID exists and replace it
-            myID = Math.floor(1000 + Math.random() * 9000).toString();
-            localStorage.setItem('clean_id', myID);
-        }
-        document.getElementById('my-id').innerText = myID;
+        let myID = null;
+        let peer = null;
+        let localStream = null;
+        let currentCall = null;
+        let isSearching = false;
+        let searchInterval = null;
 
-        // 2. GOOGLE STUN SERVERS (Fixes Network Issues)
+        // Google STUN for Connection
         const peerConfig = {
-            debug: 2,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
+            config: { iceServers: [ { urls: 'stun:stun.l.google.com:19302' } ] }
         };
 
-        let peer = new Peer(myID, peerConfig);
-        let currentCall = null;
-        let localStream = null;
-
-        // --- EVENTS ---
-
-        peer.on('open', (id) => {
-            document.getElementById('status-dot').style.background = '#00ff00';
-            document.getElementById('status-text').innerText = "Online";
-        });
-
-        peer.on('error', (err) => {
-            console.error(err);
-            alert("Error: " + err.type);
-        });
-
-        peer.on('call', (call) => {
-            // Incoming Call
-            currentCall = call;
-            document.getElementById('incoming-ui').style.display = 'flex';
-            document.getElementById('caller-id').innerText = "ID: " + call.peer;
-        });
-
-        // --- FUNCTIONS ---
-
-        function startCall() {
-            const partnerID = document.getElementById('partner-id').value;
-            if (!partnerID) return alert("Please enter ID");
-            if (partnerID === myID) return alert("Don't call yourself!");
-
-            // UI Switch
-            document.getElementById('video-ui').style.display = 'flex';
-            
-            // Get Camera
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then((stream) => {
-                localStream = stream;
-                document.getElementById('local-video').srcObject = stream;
-
-                // Make Call
-                const call = peer.call(partnerID, stream);
-                currentCall = call;
-
-                call.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
-                });
-                
-                call.on('close', endCall);
-                call.on('error', () => alert("Call Failed. Check ID."));
-            })
-            .catch(err => alert("Camera permission denied"));
+        // --- INIT ---
+        function generateID() {
+            return "random_user_" + Math.floor(Math.random() * ID_RANGE);
         }
 
-        function acceptCall() {
-            document.getElementById('incoming-ui').style.display = 'none';
-            document.getElementById('video-ui').style.display = 'flex';
+        function initPeer() {
+            myID = generateID();
+            console.log("Attempting ID: " + myID);
+            
+            peer = new Peer(myID, peerConfig);
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then((stream) => {
-                localStream = stream;
-                document.getElementById('local-video').srcObject = stream;
+            peer.on('open', (id) => {
+                document.getElementById('status-text').innerText = "Online. Ready to match.";
+                document.getElementById('status-text').style.color = "#00ff00";
+            });
 
-                currentCall.answer(stream);
+            // Agar ID already taken hai (collision), to nayi ID try karo
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    console.log("ID taken, retrying...");
+                    peer.destroy();
+                    setTimeout(initPeer, 500);
+                } else {
+                    console.error(err);
+                }
+            });
+
+            // INCOMING CALL (Match Found!)
+            peer.on('call', (call) => {
+                // Agar hum search kar rahe hain, tabhi answer karo
+                // Agar hum already baat kar rahe hain, to reject karo (simple logic)
+                if (currentCall) {
+                    // Already busy
+                    return; 
+                }
                 
-                currentCall.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
-                });
+                stopSearching(); // Search band karo
                 
-                currentCall.on('close', endCall);
+                document.getElementById('searching-layer').style.display = 'none'; // Loader hatao
+                
+                call.answer(localStream); // Call uthao
+                handleCall(call);
             });
         }
 
-        function rejectCall() {
-            if (currentCall) currentCall.close();
-            document.getElementById('incoming-ui').style.display = 'none';
+        // Initialize on Load
+        initPeer();
+
+        // --- APP LOGIC ---
+
+        function startApp() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('video-screen').style.display = 'flex';
+            
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                localStream = stream;
+                document.getElementById('local-video').srcObject = stream;
+                startSearching();
+            })
+            .catch(err => {
+                alert("Camera permission needed!");
+                location.reload();
+            });
         }
 
-        function endCall() {
+        // --- SEARCH LOGIC (THE HEART OF RANDOM CHAT) ---
+        function startSearching() {
             if (currentCall) currentCall.close();
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            currentCall = null;
+            isSearching = true;
+
+            // UI Reset
+            document.getElementById('searching-layer').style.display = 'flex';
+            document.getElementById('remote-video').srcObject = null;
+
+            // Har 2 second me ek random user ko dial karo
+            searchInterval = setInterval(() => {
+                if (!isSearching) return;
+
+                let randomTarget = "random_user_" + Math.floor(Math.random() * ID_RANGE);
+                
+                // Khud ko call mat karo
+                if (randomTarget === myID) return;
+
+                console.log("Dialing: " + randomTarget);
+                
+                let call = peer.call(randomTarget, localStream);
+
+                // Agar connection establish ho jaye
+                call.on('stream', (remoteStream) => {
+                    stopSearching();
+                    document.getElementById('searching-layer').style.display = 'none';
+                    handleCall(call);
+                });
+
+                // Agar user offline ho (PeerJS usually error deta hai timeout ke baad)
+                // Hum bas try karte rahenge.
+                setTimeout(() => {
+                    if (isSearching && !currentCall) {
+                        call.close(); // Cancel this attempt and try next
+                    }
+                }, 1500); // 1.5 second wait karo phir agla try karo
+
+            }, 2000);
+        }
+
+        function stopSearching() {
+            isSearching = false;
+            clearInterval(searchInterval);
+        }
+
+        function handleCall(call) {
+            currentCall = call;
+            call.on('stream', (remoteStream) => {
+                document.getElementById('remote-video').srcObject = remoteStream;
+            });
+            call.on('close', () => {
+                // Agar samne wala kat de, to wapas search shuru karo
+                if (!isSearching) skipPartner(); 
+            });
+        }
+
+        // --- BUTTONS ---
+
+        function skipPartner() {
+            if (currentCall) currentCall.close();
+            startSearching(); // Dubara naya dhundo
+        }
+
+        function stopChat() {
+            if (currentCall) currentCall.close();
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
             location.reload();
         }
+
     </script>
 </body>
 </html>
