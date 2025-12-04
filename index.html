@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Video Call</title>
+    <title>WhatsApp Direct Call</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -22,14 +22,12 @@
             margin: 0;
             height: 100vh;
             overflow: hidden;
+            user-select: none;
         }
 
-        /* --- SCREEN 1: HOME / FRIEND LIST --- */
-        #home-screen {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+        /* --- SCREEN 1: HOME --- */
+        #home-screen { display: flex; flex-direction: column; height: 100%; }
+        
         .header {
             background-color: var(--header);
             padding: 15px 20px;
@@ -38,126 +36,121 @@
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .my-id-box {
-            background: rgba(255,255,255,0.1);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
+        .app-title { font-weight: bold; font-size: 20px; color: var(--subtext); }
+        .status-dot {
+            height: 10px; width: 10px; background-color: red;
+            border-radius: 50%; display: inline-block; margin-right: 5px;
         }
-        .copy-icon { font-size: 16px; color: var(--primary); }
         
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
+        /* My ID Card */
+        .my-profile {
+            padding: 20px;
+            background: #2a3942;
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
         }
-        .friend-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #2a3942;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .friend-item:hover { background-color: #202c33; }
-        .avatar {
-            width: 50px;
-            height: 50px;
-            background: #6b7c85;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 15px;
+        .id-display {
             font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: 1px;
+            margin: 10px 0;
+            user-select: text;
         }
-        .friend-info h4 { margin: 0; font-size: 17px; }
-        .friend-info p { margin: 5px 0 0; color: var(--subtext); font-size: 14px; }
-        
-        .fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            cursor: pointer;
+        .copy-btn {
+            background: transparent; border: 1px solid var(--subtext);
+            color: var(--subtext); padding: 5px 15px; border-radius: 20px;
+            cursor: pointer; font-size: 12px;
         }
 
-        /* --- SCREEN 2: INCOMING CALL MODAL --- */
+        /* Friend List */
+        .chat-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .friend-item {
+            display: flex; align-items: center; padding: 15px;
+            border-bottom: 1px solid #2a3942; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .friend-item:active { background-color: #202c33; }
+        .avatar {
+            width: 50px; height: 50px; background: #6b7c85;
+            border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; margin-right: 15px;
+        }
+        
+        /* FAB (Add Button) */
+        .fab {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; background-color: var(--primary);
+            border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            cursor: pointer; z-index: 10;
+        }
+
+        /* --- SCREEN 2: INCOMING CALL --- */
         #incoming-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 20, 26, 0.95); z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
         }
         .caller-avatar {
-            width: 100px; height: 100px;
-            background: #00bcd4;
-            border-radius: 50%;
-            margin-bottom: 20px;
+            width: 120px; height: 120px; background: #00bcd4;
+            border-radius: 50%; margin-bottom: 20px;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 188, 212, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(0, 188, 212, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 188, 212, 0); } }
         
         .call-actions { display: flex; gap: 40px; margin-top: 50px; }
         .action-btn {
-            width: 60px; height: 60px; border-radius: 50%; border: none;
+            width: 70px; height: 70px; border-radius: 50%; border: none;
             display: flex; justify-content: center; align-items: center;
-            cursor: pointer; font-size: 24px; color: white;
+            cursor: pointer; font-size: 30px; color: white;
         }
         .btn-accept { background: #00a884; }
         .btn-decline { background: #ef4444; }
 
-        /* --- SCREEN 3: VIDEO CALL (WhatsApp Style) --- */
+        /* --- SCREEN 3: VIDEO CALL --- */
         #video-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 50;
+            background: #000; z-index: 50;
         }
         video { object-fit: cover; }
         #remote-video { width: 100%; height: 100%; }
         #local-video {
-            position: absolute; bottom: 100px; right: 20px;
-            width: 100px; height: 140px;
-            border-radius: 10px; border: 2px solid white;
-            background: #333; transform: scaleX(-1);
+            position: absolute; bottom: 120px; right: 20px;
+            width: 110px; height: 160px; border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: #222; transform: scaleX(-1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         .controls {
             position: absolute; bottom: 0; width: 100%;
-            padding: 20px 0; background: rgba(0,0,0,0.6);
-            display: flex; justify-content: center; gap: 20px;
+            padding: 30px 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex; justify-content: center; gap: 30px;
         }
         .ctrl-btn {
-            width: 50px; height: 50px; border-radius: 50%;
-            border: none; background: rgba(255,255,255,0.2);
-            color: white; cursor: pointer;
+            width: 60px; height: 60px; border-radius: 50%;
+            border: none; background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            color: white; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
         }
-        .btn-end { background: #ef4444; }
+        .btn-end { background: #ef4444 !important; }
 
-        /* ADD FRIEND MODAL */
+        /* MODAL */
         #add-friend-modal {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: var(--header); padding: 20px;
-            border-radius: 10px; width: 300px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #3b4a54; padding: 25px;
+            border-radius: 15px; width: 80%; max-width: 320px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7); z-index: 20;
         }
-        input { width: 90%; padding: 10px; background: #111b21; border: none; color: white; margin-bottom: 10px; }
-
+        input { 
+            width: 100%; padding: 12px; background: #202c33; 
+            border: 1px solid #555; color: white; margin: 15px 0; 
+            border-radius: 8px; box-sizing: border-box; font-size: 16px; text-align: center;
+        }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -165,17 +158,22 @@
 
     <div id="home-screen">
         <div class="header">
-            <span style="font-weight: bold; font-size: 20px;">Chats</span>
-            <div class="my-id-box" onclick="copyMyID()">
-                <span id="my-display-id">Loading...</span>
-                <i class="material-icons copy-icon">content_copy</i>
+            <span class="app-title">WhatsApp Call</span>
+            <div style="font-size: 12px; color: #aaa;">
+                <span id="status-dot" class="status-dot"></span> <span id="status-text">Connecting...</span>
             </div>
         </div>
 
+        <div class="my-profile">
+            <p style="margin:0; color:#aaa; font-size: 12px;">YOUR ID</p>
+            <div class="id-display" id="my-display-id">...</div>
+            <button class="copy-btn" onclick="copyMyID()">COPY ID</button>
+        </div>
+
         <div class="chat-list" id="friend-list">
-            <div style="text-align: center; margin-top: 50px; color: #8696a0;">
+            <div style="text-align: center; margin-top: 40px; color: #8696a0;">
+                <i class="material-icons" style="font-size: 40px; opacity: 0.5;">history</i>
                 <p>No recent calls.</p>
-                <p>Tap + to call someone.</p>
             </div>
         </div>
 
@@ -185,19 +183,19 @@
     </div>
 
     <div id="add-friend-modal" class="hidden">
-        <h3>New Call</h3>
-        <p style="font-size: 12px; color: #aaa;">Enter partner's ID:</p>
-        <input type="text" id="partner-id-input" placeholder="e.g. user-8291">
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button onclick="startOutgoingCall()" style="flex:1; padding: 10px; background: var(--primary); border:none; color: white; cursor: pointer;">Call</button>
-            <button onclick="closeAddModal()" style="padding: 10px; background: transparent; border: 1px solid #555; color: white; cursor: pointer;">Cancel</button>
+        <h3 style="margin: 0; text-align: center;">New Video Call</h3>
+        <p style="font-size: 13px; color: #aaa; text-align: center;">Enter your friend's 4-digit ID</p>
+        <input type="number" id="partner-id-input" placeholder="e.g. 4821">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closeAddModal()" style="flex:1; padding: 12px; background: transparent; border: 1px solid #555; color: #aaa; border-radius: 8px;">Cancel</button>
+            <button onclick="startOutgoingCall()" style="flex:1; padding: 12px; background: var(--primary); border:none; color: white; border-radius: 8px; font-weight: bold;">Call</button>
         </div>
     </div>
 
     <div id="incoming-modal" class="hidden">
         <div class="caller-avatar"></div>
-        <h2 id="caller-name">Unknown Caller</h2>
-        <p>WhatsApp Video Call</p>
+        <h2 id="caller-name">Unknown</h2>
+        <p style="color: #aaa;">WhatsApp Video Call</p>
         <div class="call-actions">
             <button class="action-btn btn-decline" onclick="rejectCall()"><i class="material-icons">call_end</i></button>
             <button class="action-btn btn-accept" onclick="acceptCall()"><i class="material-icons">videocam</i></button>
@@ -208,75 +206,93 @@
         <video id="remote-video" autoplay playsinline></video>
         <video id="local-video" autoplay muted playsinline></video>
         <div class="controls">
-            <button class="ctrl-btn"><i class="material-icons">mic</i></button>
-            <button class="ctrl-btn"><i class="material-icons">videocam_off</i></button>
+            <button class="ctrl-btn" onclick="toggleMute()"><i class="material-icons">mic</i></button>
             <button class="ctrl-btn btn-end" onclick="endCall()"><i class="material-icons">call_end</i></button>
+            <button class="ctrl-btn" onclick="toggleCam()"><i class="material-icons">videocam</i></button>
         </div>
     </div>
 
     <script>
-        // --- IDENTITY SYSTEM (NO LOGIN) ---
-        // अगर ID पहले से है तो वो लो, नहीं तो नई बनाओ
+        // --- 1. SETUP & CONFIGURATION ---
+        
+        // 4 अंकों का आसान ID बनाना
         let myID = localStorage.getItem('myChatID');
         if (!myID) {
-            myID = 'user-' + Math.floor(1000 + Math.random() * 9000); // e.g. user-4821
+            myID = Math.floor(1000 + Math.random() * 9000).toString(); 
             localStorage.setItem('myChatID', myID);
         }
-        document.getElementById('my-display-id').innerText = "My ID: " + myID;
+        document.getElementById('my-display-id').innerText = myID;
 
-        // --- GLOBAL VARIABLES ---
-        let peer = null;
+        // **IMPORTANT: GOOGLE STUN SERVERS (Connection fix)**
+        const peerConfig = {
+            debug: 2,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        };
+
+        let peer = new Peer(myID, peerConfig);
         let currentCall = null;
         let localStream = null;
-        
-        // Load Friends from LocalStorage
         let friends = JSON.parse(localStorage.getItem('myFriends')) || [];
 
-        // --- PEERJS INITIALIZATION ---
-        // अपना ID लेकर नेटवर्क पर रजिस्टर हो जाओ
-        peer = new Peer(myID);
+        // --- 2. CONNECTION EVENTS ---
 
         peer.on('open', (id) => {
-            console.log('Connected with ID:', id);
+            console.log('Online with ID:', id);
+            document.getElementById('status-dot').style.backgroundColor = '#00ff00';
+            document.getElementById('status-text').innerText = "Online";
             renderFriends();
         });
 
-        // INCOMING CALL LISTENER
-        peer.on('call', (call) => {
-            // जब कोई कॉल करे, तो Incoming Screen दिखाओ
-            currentCall = call;
-            document.getElementById('incoming-modal').classList.remove('hidden');
-            document.getElementById('caller-name').innerText = "Incoming: " + call.peer;
+        peer.on('error', (err) => {
+            console.error(err);
+            if(err.type === 'peer-unavailable') {
+                alert("User is OFFLINE or ID is wrong. Ask them to open this app.");
+                endCall();
+            } else {
+                document.getElementById('status-dot').style.backgroundColor = 'red';
+                document.getElementById('status-text').innerText = "Connection Error";
+            }
         });
 
-        // --- CALLING FUNCTIONS ---
+        // INCOMING CALL
+        peer.on('call', (call) => {
+            currentCall = call;
+            document.getElementById('incoming-modal').classList.remove('hidden');
+            document.getElementById('caller-name').innerText = "ID: " + call.peer;
+        });
+
+        // --- 3. CALL FUNCTIONS ---
 
         function startOutgoingCall() {
             const partnerID = document.getElementById('partner-id-input').value.trim();
-            if(!partnerID) return alert("Please enter an ID");
+            if(!partnerID || partnerID.length !== 4) return alert("Please enter a valid 4-digit ID");
             if(partnerID === myID) return alert("You cannot call yourself!");
 
             closeAddModal();
             initiateVideo(partnerID);
         }
 
-        // फ्रेंड लिस्ट से सीधे कॉल करने के लिए
         function callFriend(id) {
             initiateVideo(id);
         }
 
         function initiateVideo(remoteID) {
-            // कैमरा चालू करो
+            // UI Update
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('video-screen').classList.remove('hidden');
+
             navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then((stream) => {
                 localStream = stream;
                 document.getElementById('local-video').srcObject = stream;
                 
-                // UI बदलो
-                document.getElementById('home-screen').classList.add('hidden');
-                document.getElementById('video-screen').classList.remove('hidden');
-
-                // कॉल लगाओ
+                // Call Peer
                 const call = peer.call(remoteID, stream);
                 currentCall = call;
 
@@ -284,42 +300,40 @@
                     document.getElementById('remote-video').srcObject = remoteStream;
                 });
 
-                call.on('error', (err) => {
-                    alert("User offline or not found.");
+                call.on('close', () => {
                     endCall();
                 });
 
-                // कॉल करने पर उसे फ्रेंड लिस्ट में सेव कर लो
                 addToFriends(remoteID);
             })
             .catch((err) => {
-                alert("Camera access required!");
-                console.error(err);
+                alert("Camera permission denied!");
+                location.reload();
             });
         }
 
-        // --- INCOMING CALL HANDLING ---
-
         function acceptCall() {
             document.getElementById('incoming-modal').classList.add('hidden');
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('video-screen').classList.remove('hidden');
             
             navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then((stream) => {
                 localStream = stream;
                 document.getElementById('local-video').srcObject = stream;
                 
-                document.getElementById('home-screen').classList.add('hidden');
-                document.getElementById('video-screen').classList.remove('hidden');
-
-                // कॉल का जवाब दो (Answer)
+                // Answer Call
                 currentCall.answer(stream);
                 
-                // उस यूजर को फ्रेंड लिस्ट में सेव करो
-                addToFriends(currentCall.peer);
-
                 currentCall.on('stream', (remoteStream) => {
                     document.getElementById('remote-video').srcObject = remoteStream;
                 });
+
+                currentCall.on('close', () => {
+                    endCall();
+                });
+
+                addToFriends(currentCall.peer);
             });
         }
 
@@ -334,21 +348,18 @@
             location.reload();
         }
 
-        // --- FRIEND LIST LOGIC ---
+        // --- 4. UTILS & UI HELPERS ---
 
         function addToFriends(id) {
-            // अगर पहले से लिस्ट में नहीं है तो जोड़ो
             if(!friends.includes(id)) {
                 friends.push(id);
                 localStorage.setItem('myFriends', JSON.stringify(friends));
-                renderFriends();
             }
         }
 
         function renderFriends() {
             const list = document.getElementById('friend-list');
             if(friends.length === 0) return;
-
             list.innerHTML = '';
             friends.forEach(friendId => {
                 const item = document.createElement('div');
@@ -356,9 +367,9 @@
                 item.onclick = () => callFriend(friendId);
                 item.innerHTML = `
                     <div class="avatar"><i class="material-icons" style="color:white;">person</i></div>
-                    <div class="friend-info">
-                        <h4>${friendId}</h4>
-                        <p>Tap to call back</p>
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:16px;">${friendId}</h4>
+                        <p style="margin:4px 0 0; font-size:12px; color:#8696a0;">Tap to video call</p>
                     </div>
                     <i class="material-icons" style="color: var(--primary);">videocam</i>
                 `;
@@ -366,12 +377,22 @@
             });
         }
 
-        // --- UTILITIES ---
         function copyMyID() {
-            navigator.clipboard.writeText(myID).then(() => alert("ID Copied! Share this with your partner."));
+            navigator.clipboard.writeText(myID).then(() => alert("ID Copied: " + myID));
         }
+
         function showAddModal() { document.getElementById('add-friend-modal').classList.remove('hidden'); }
         function closeAddModal() { document.getElementById('add-friend-modal').classList.add('hidden'); }
+        
+        // Mute/Unmute
+        function toggleMute() {
+            const audioTrack = localStream.getAudioTracks()[0];
+            audioTrack.enabled = !audioTrack.enabled;
+        }
+        function toggleCam() {
+            const videoTrack = localStream.getVideoTracks()[0];
+            videoTrack.enabled = !videoTrack.enabled;
+        }
 
     </script>
 </body>
